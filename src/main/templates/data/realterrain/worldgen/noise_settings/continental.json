@@ -1,0 +1,60 @@
+{
+  "default_block": "minecraft:stone",
+  "default_fluid": "minecraft:water",
+  "disable_mob_generation": false,
+  "legacy_random_source": false,
+  "material_rule": "minecraft:overworld",
+  "noise": {
+    "min_y": -64,
+    "height": 2096
+  },
+  "noise_router": {
+    "temperature": {
+      "type": "minecraft:add",
+      "left": {
+        "type": "minecraft:mul",
+        "left": 0.85,
+        "right": {
+          "type": "minecraft:add",
+          "left": 1.0,
+          "right": {
+            "type": "minecraft:mul",
+            "left": -2.0,
+            "right": {
+              "type": "minecraft:abs",
+              "input": {
+                "type": "minecraft:gradient",
+                "axis": "z",
+                "from_coordinate": -250000,
+                "to_coordinate": 250000,
+                "from_value": -1.0,
+                "to_value": 1.0
+              }
+            }
+          }
+        }
+      },
+      "right": {
+        "type": "minecraft:mul",
+        "left": 0.15,
+        "right": "minecraft:overworld/temperature"
+      }
+    },
+    "vegetation": "minecraft:overworld/vegetation",
+    "continents": "realterrain:continental_landmass",
+    "erosion": "realterrain:tectonic_mountain",
+    "depth": "minecraft:overworld/depth",
+    "ridges": "minecraft:overworld/ridges",
+    "chunk_surface_level": "minecraft:overworld/chunk_surface_level",
+    "final_density": "minecraft:overworld/final_density"
+  },
+  "sea_level": 63,
+  "spawn_target": [
+    {
+      "minecraft:overworld/continents": [
+        0.05,
+        1.0
+      ]
+    }
+  ]
+}

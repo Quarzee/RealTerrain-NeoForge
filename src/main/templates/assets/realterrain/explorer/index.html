@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RealTerrain World Map</title>
+  <style>
+    :root { color-scheme: dark; --bg:#10151b; --panel:#19232c; --line:#31404a; --text:#e9f0f3; --muted:#a5b5bd; --accent:#79c9d1; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font:14px system-ui,sans-serif; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--panel); }
+    h1 { margin:0; font-size:18px; font-weight:650; }
+    .sub { color:var(--muted); margin-top:3px; font-size:12px; }
+    .actions { display:flex; align-items:center; gap:8px; }
+    select,button { border:1px solid var(--line); background:#202e38; color:var(--text); border-radius:6px; padding:8px 10px; font:inherit; }
+    button { cursor:pointer; } button:hover { border-color:var(--accent); }
+    main { display:grid; grid-template-columns:minmax(0,1fr) 250px; min-height:calc(100vh - 62px); }
+    .map-wrap { min-width:0; display:flex; align-items:center; justify-content:center; padding:18px; }
+    .map-frame { position:relative; width:min(100%, calc(100vh - 100px)); aspect-ratio:1; background:#162a36; border:1px solid var(--line); box-shadow:0 12px 50px #0007; }
+    #world { display:block; width:100%; height:100%; image-rendering:pixelated; cursor:crosshair; }
+    #marker { display:none; position:absolute; width:11px; height:11px; border:2px solid white; border-radius:50%; transform:translate(-50%,-50%); box-shadow:0 0 0 1px #111; pointer-events:none; }
+    aside { border-left:1px solid var(--line); background:var(--panel); padding:16px; }
+    aside h2 { font-size:14px; margin:0 0 10px; }
+    #point { min-height:72px; margin-bottom:18px; padding:10px; border:1px solid var(--line); border-radius:6px; color:var(--muted); line-height:1.55; overflow-wrap:anywhere; }
+    .legend { display:grid; gap:7px; }
+    .item { display:flex; align-items:center; gap:8px; color:#d4e0e5; font-size:12px; }
+    .swatch { width:14px; height:14px; border-radius:3px; border:1px solid #ffffff38; flex:none; }
+    .note { color:var(--muted); font-size:11px; line-height:1.5; margin-top:16px; }
+    #status { color:var(--muted); }
+    @media (max-width:760px) { main { grid-template-columns:1fr; } .map-wrap { padding:10px; } .map-frame { width:min(100%, calc(100vw - 20px)); } aside { border-left:0; border-top:1px solid var(--line); } .legend { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>RealTerrain · World Map</h1><div class="sub">Seed <span id="seed">loading…</span> · 500,000 × 500,000 blocks · north is up</div></div>
+    <div class="actions"><label for="mode">Layer</label><select id="mode"><option value="biome">Biomes</option><option value="height">Height</option><option value="temperature">Temperature</option></select><label for="resolution">Detail</label><select id="resolution"><option>256</option><option>384</option><option>512</option></select><button id="refresh">Render</button></div>
+  </header>
+  <main>
+    <section class="map-wrap"><div class="map-frame"><img id="world" alt="Full world terrain and biome map"><div id="marker"></div></div></section>
+    <aside>
+      <h2>Map sample</h2><div id="point">Click the map to inspect a location.</div>
+      <h2 id="legendTitle">Biomes</h2>
+      <div class="legend" id="biomeLegend">
+        <div class="item"><i class="swatch" style="background:#126B3A"></i>Tropical rainforest</div>
+        <div class="item"><i class="swatch" style="background:#398C43"></i>Tropical seasonal forest</div>
+        <div class="item"><i class="swatch" style="background:#C1A83D"></i>Savanna</div>
+        <div class="item"><i class="swatch" style="background:#D9AC59"></i>Hot desert</div>
+        <div class="item"><i class="swatch" style="background:#728D4E"></i>Mediterranean woodland</div>
+        <div class="item"><i class="swatch" style="background:#89B65B"></i>Temperate grassland</div>
+        <div class="item"><i class="swatch" style="background:#34774A"></i>Temperate deciduous forest</div>
+        <div class="item"><i class="swatch" style="background:#205B52"></i>Temperate rainforest</div>
+        <div class="item"><i class="swatch" style="background:#AAA581"></i>Cold desert and steppe</div>
+        <div class="item"><i class="swatch" style="background:#43664D"></i>Boreal forest</div>
+        <div class="item"><i class="swatch" style="background:#A2B4A6"></i>Tundra</div>
+        <div class="item"><i class="swatch" style="background:#E9F0EC"></i>Polar desert</div>
+        <div class="item"><i class="swatch" style="background:#B8E7F3"></i>Ice sea</div>
+        <div class="item"><i class="swatch" style="background:#4F9EA8"></i>Other oceans</div>
+      </div>
+      <div id="heightLegend" hidden><div class="item"><i class="swatch" style="background:#005FFF"></i>Sea level</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:linear-gradient(90deg,#00ffcc,#00ff00,#ffff00,#ff8000,#ff0000)"></i>Hue shifts every 10 blocks higher</div></div>
+      <div id="temperatureLegend" hidden><div class="item"><i class="swatch" style="background:#2537A4"></i>Coldest</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:#F0DB67"></i>Temperate</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:#D43B24"></i>Warmest</div></div>
+      <p class="note">The map samples the active world’s terrain density and biome climate across the full footprint. It previews the generated layout without creating chunks; fine details and structures appear as chunks generate. Temperature is the world generation climate signal, not a Celsius reading.</p>
+      <p id="status"></p>
+    </aside>
+  </main>
+  <script>
+    const image = document.getElementById('world');
+    const marker = document.getElementById('marker');
+    const point = document.getElementById('point');
+    const status = document.getElementById('status');
+    async function render() {
+      status.textContent = 'Rendering map…';
+      document.getElementById('seed').textContent = 'loading…';
+      const size = document.getElementById('resolution').value;
+      const mode = document.getElementById('mode').value;
+      image.src = '/api/map.png?size=' + size + '&mode=' + mode + '&t=' + Date.now();
+      const titles = { biome:'Biomes', height:'Height', temperature:'Temperature' };
+      document.getElementById('legendTitle').textContent = titles[mode];
+      document.getElementById('biomeLegend').hidden = mode !== 'biome';
+      document.getElementById('heightLegend').hidden = mode !== 'height';
+      document.getElementById('temperatureLegend').hidden = mode !== 'temperature';
+    }
+    image.addEventListener('load', () => {
+      document.getElementById('seed').textContent = image.getAttribute('data-seed') || 'active world';
+      status.textContent = 'Rendered ' + image.naturalWidth + ' × ' + image.naturalHeight + ' samples.';
+    });
+    image.addEventListener('error', () => { status.textContent = 'Map render failed. Try a lower detail setting or rerender.'; });
+    image.addEventListener('load', async () => {
+      try {
+        const response = await fetch('/api/status');
+        const info = await response.json();
+        if (info.seed) { document.getElementById('seed').textContent = info.seed; image.setAttribute('data-seed', info.seed); }
+      } catch (_) { }
+    });
+    document.getElementById('refresh').addEventListener('click', render);
+    document.getElementById('mode').addEventListener('change', render);
+    document.getElementById('resolution').addEventListener('change', render);
+    image.addEventListener('click', async event => {
+      const box = image.getBoundingClientRect();
+      const fx = Math.max(0, Math.min(1, (event.clientX - box.left) / box.width));
+      const fz = Math.max(0, Math.min(1, (event.clientY - box.top) / box.height));
+      const x = Math.round(-250000 + fx * 500000);
+      const z = Math.round(-250000 + fz * 500000);
+      marker.style.display = 'block'; marker.style.left = (fx * 100) + '%'; marker.style.top = (fz * 100) + '%';
+      point.textContent = 'Sampling…';
+      try {
+        const sample = await (await fetch('/api/point?x=' + x + '&z=' + z)).json();
+        point.innerHTML = 'Biome: <strong>' + sample.biome.replace('realterrain:', '').replaceAll('_', ' ') + '</strong><br>Surface Y: ' + sample.surfaceY + '<br>Temperature signal: ' + Number(sample.temperature).toFixed(3) + '<br>X: ' + sample.x.toLocaleString() + ' · Z: ' + sample.z.toLocaleString();
+      } catch (_) { point.textContent = 'Could not sample this point.'; }
+    });
+    render();
+  </script>
+</body>
+</html>

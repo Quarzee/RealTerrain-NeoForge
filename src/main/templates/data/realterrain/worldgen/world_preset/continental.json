@@ -1,0 +1,727 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "type": "realterrain:continental",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:multi_noise",
+          "biomes": [
+            {
+              "biome": "realterrain:alpine",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -0.6,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:hot_desert",
+              "parameters": {
+                "temperature": [
+                  0.55,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  -0.55
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:savanna",
+              "parameters": {
+                "temperature": [
+                  0.55,
+                  1.0
+                ],
+                "humidity": [
+                  -0.55,
+                  -0.1
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:tropical_seasonal_forest",
+              "parameters": {
+                "temperature": [
+                  0.55,
+                  1.0
+                ],
+                "humidity": [
+                  -0.1,
+                  0.35
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:tropical_rainforest",
+              "parameters": {
+                "temperature": [
+                  0.55,
+                  1.0
+                ],
+                "humidity": [
+                  0.35,
+                  1.0
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:mediterranean_woodland",
+              "parameters": {
+                "temperature": [
+                  0.25,
+                  0.68
+                ],
+                "humidity": [
+                  -1.0,
+                  -0.3
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:temperate_grassland",
+              "parameters": {
+                "temperature": [
+                  0.1,
+                  0.68
+                ],
+                "humidity": [
+                  -0.3,
+                  0.05
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:temperate_deciduous_forest",
+              "parameters": {
+                "temperature": [
+                  0.1,
+                  0.68
+                ],
+                "humidity": [
+                  0.05,
+                  0.48
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:temperate_rainforest",
+              "parameters": {
+                "temperature": [
+                  0.1,
+                  0.68
+                ],
+                "humidity": [
+                  0.48,
+                  1.0
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:cold_desert_steppe",
+              "parameters": {
+                "temperature": [
+                  -0.45,
+                  0.16
+                ],
+                "humidity": [
+                  -1.0,
+                  -0.4
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:tundra",
+              "parameters": {
+                "temperature": [
+                  -0.62,
+                  -0.2
+                ],
+                "humidity": [
+                  -0.4,
+                  0.35
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:boreal_forest",
+              "parameters": {
+                "temperature": [
+                  -0.42,
+                  0.24
+                ],
+                "humidity": [
+                  0.35,
+                  1.0
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:polar_desert",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  -0.32
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  0.0,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.6
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "realterrain:ice_sea",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  -0.32
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -1.0,
+                  0.0
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:cold_ocean",
+              "parameters": {
+                "temperature": [
+                  -0.45,
+                  0.0
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -0.45,
+                  0.0
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:deep_cold_ocean",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  -0.45
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -1.0,
+                  -0.45
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:ocean",
+              "parameters": {
+                "temperature": [
+                  -0.15,
+                  0.45
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -0.45,
+                  0.0
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:deep_ocean",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  -0.45
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -1.0,
+                  -0.45
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:lukewarm_ocean",
+              "parameters": {
+                "temperature": [
+                  0.25,
+                  0.7
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -0.45,
+                  0.0
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:deep_lukewarm_ocean",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  -0.45
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -1.0,
+                  -0.45
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:warm_ocean",
+              "parameters": {
+                "temperature": [
+                  0.6,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -0.45,
+                  0.0
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:frozen_ocean",
+              "parameters": {
+                "temperature": [
+                  -0.38,
+                  -0.15
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -1.0,
+                  0.0
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "minecraft:deep_frozen_ocean",
+              "parameters": {
+                "temperature": [
+                  -0.38,
+                  -0.15
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -1.0,
+                  -0.45
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "offset": 0.0
+              }
+            }
+          ]
+        },
+        "settings": "realterrain:continental"
+      }
+    },
+    "minecraft:the_nether": {
+      "type": "minecraft:the_nether",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:multi_noise",
+          "preset": "minecraft:nether"
+        },
+        "settings": "minecraft:nether"
+      }
+    },
+    "minecraft:the_end": {
+      "type": "minecraft:the_end",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:the_end"
+        },
+        "settings": "minecraft:end"
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "generator.realterrain.continental": "Continental World",
+  "gui.realterrain.starting_biome": "Starting biome",
+  "gui.realterrain.starting_biome.default": "Default spawn",
+  "gui.realterrain.starting_biome.tropical_rainforest": "Tropical rainforest",
+  "gui.realterrain.starting_biome.tropical_seasonal_forest": "Tropical seasonal forest",
+  "gui.realterrain.starting_biome.savanna": "Savanna",
+  "gui.realterrain.starting_biome.hot_desert": "Hot desert",
+  "gui.realterrain.starting_biome.mediterranean_woodland": "Mediterranean woodland and shrubland",
+  "gui.realterrain.starting_biome.temperate_grassland": "Temperate grassland",
+  "gui.realterrain.starting_biome.temperate_deciduous_forest": "Temperate deciduous forest",
+  "gui.realterrain.starting_biome.temperate_rainforest": "Temperate rainforest",
+  "gui.realterrain.starting_biome.cold_desert_steppe": "Cold desert and steppe",
+  "gui.realterrain.starting_biome.boreal_forest": "Boreal forest",
+  "gui.realterrain.starting_biome.tundra": "Tundra",
+  "gui.realterrain.starting_biome.polar_desert": "Polar desert",
+  "gui.realterrain.starting_biome.ice_sea": "Ice sea",
+  "message.realterrain.starting_biome_not_found": "Could not find that biome within the world footprint; keeping the normal spawn.",
+  "message.realterrain.starting_biome_surface_mismatch": "The selected biome was found, but not at a safe surface location; keeping the normal spawn.",
+  "message.realterrain.starting_biome_arrived": "Starting location selected."
+}

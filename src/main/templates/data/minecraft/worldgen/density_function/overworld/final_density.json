@@ -1,0 +1,46 @@
+{
+  "type": "minecraft:add",
+  "left": {
+    "type": "minecraft:squeeze",
+    "input": {
+      "type": "minecraft:interpolated",
+      "input": {
+        "type": "minecraft:mul",
+        "left": 0.64,
+        "right": {
+          "type": "minecraft:blend_density",
+          "input": {
+            "type": "minecraft:lerp",
+            "alpha": {
+              "type": "minecraft:gradient",
+              "from_value": 0.0,
+              "to_value": 1.0,
+              "axis": "y",
+              "from_coordinate": -64,
+              "to_coordinate": -40
+            },
+            "first": 0.1171875,
+            "second": {
+              "type": "minecraft:lerp",
+              "alpha": {
+                "type": "minecraft:gradient",
+                "from_value": 1.0,
+                "to_value": 0.0,
+                "axis": "y",
+                "from_coordinate": 1984,
+                "to_coordinate": 2000
+              },
+              "first": -0.078125,
+              "second": "minecraft:overworld/sloped_cheese"
+            }
+          }
+        }
+      },
+      "cell_size_xz": 4,
+      "cell_size_y": 16
+    }
+  },
+  "right": {
+    "type": "minecraft:beardifier"
+  }
+}

@@ -25,12 +25,13 @@ authors="Quarzee"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Example mod description.
+Adds an optional, seed-driven continental Overworld preset using Minecraft native terrain generation.
+Includes custom climate biomes and a local interactive whole-world map.
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
-#[[mixins]]
-#config="${mod_id}.mixins.json"
+[[mixins]]
+config="${mod_id}.mixins.json"
 
 # The [[accessTransformers]] block allows you to declare where your AT file is.
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg
@@ -64,3 +65,12 @@ Example mod description.
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
+
+# Distant Horizons is optional. RealTerrain uses Minecraft's standard noise chunk
+# generator, so DH can obtain LOD terrain through its normal world-generation path.
+[[dependencies.${mod_id}]]
+    modId="distanthorizons"
+    type="optional"
+    versionRange="[3.3.4,)"
+    ordering="AFTER"
+    side="CLIENT"

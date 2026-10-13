@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -26,11 +28,19 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        filter { includeGroup 'maven.modrinth' }
+    }
 }
 
 base {
-    archivesName = mod_id
+    archivesName = 'RealTerrain-NeoForge'
 }
 
 // Mojang ships Java 25 to end users in 26.3, so mods should target Java 25.
@@ -110,6 +120,9 @@ configurations {
 }
 
 dependencies {
+    // Optional local testing dependency. The released RealTerrain jar does not bundle DH.
+    localRuntime 'maven.modrinth:uCdwusMi:TGgEbP9A'
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
@@ -175,9 +188,23 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+
 idea {
     module {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+// Put distributable archives from every IdeaProjects Gradle project in one shared folder.
+def ideaProjectsDirectory = rootProject.projectDir.toPath()
+while (ideaProjectsDirectory.fileName?.toString() != 'IdeaProjects') {
+    if (ideaProjectsDirectory.parent == null) {
+        throw new GradleException("Could not locate the IdeaProjects directory from ${rootProject.projectDir}")
+    }
+    ideaProjectsDirectory = ideaProjectsDirectory.parent
+}
+def sharedBuildDirectory = ideaProjectsDirectory.resolve('builds').toFile()
+tasks.withType(AbstractArchiveTask).configureEach {
+    destinationDirectory = sharedBuildDirectory
 }
