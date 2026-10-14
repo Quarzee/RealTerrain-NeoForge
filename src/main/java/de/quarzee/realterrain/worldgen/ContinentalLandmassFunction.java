@@ -71,6 +71,9 @@ public record ContinentalLandmassFunction() implements DensityFunction {
             double best = -10.0;
             for (int gz = cellZ - 1; gz <= cellZ + 1; gz++) {
                 for (int gx = cellX - 1; gx <= cellX + 1; gx++) {
+                    double nominalDx = x + warpX - gx * CELL_SPACING;
+                    double nominalDz = z + warpZ - gz * CELL_SPACING;
+                    if (nominalDx * nominalDx + nominalDz * nominalDz > 1_400_000.0 * 1_400_000.0) continue;
                     best = Math.max(best, continentScore(x + warpX, z + warpZ, gx, gz));
                 }
             }

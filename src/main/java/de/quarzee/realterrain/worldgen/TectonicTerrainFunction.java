@@ -18,7 +18,7 @@ public record TectonicTerrainFunction() implements DensityFunction {
 
     static double mountainStrength(long seed, int x, int z, ContinentalLandmassFunction.LandmassSampler land) {
         double continentalness = land.sample(x, z);
-        TectonicPlateModel.Signal plate = TectonicPlateModel.sample(seed, x, z, land);
+        TectonicPlateModel.Signal plate = TectonicPlateModel.sample(seed, x, z);
         double beltStrength = Math.max(plate.convergence() * plate.boundaryStrength(),
                 Math.max(plate.volcanicPotential(), plate.divergence() * plate.boundaryStrength() * 0.16));
         double inland = smoothstep(0.02, 0.56, continentalness);
@@ -90,7 +90,7 @@ public record TectonicTerrainFunction() implements DensityFunction {
 
             // Moving plate boundaries replace the previous arbitrary straight belts.
             // Convergent margins build ranges; subduction margins receive extra volcanic uplift.
-            TectonicPlateModel.Signal plate = TectonicPlateModel.sample(seed, x, z, land);
+            TectonicPlateModel.Signal plate = TectonicPlateModel.sample(seed, x, z);
             double boundaryStrength = plate.boundaryStrength();
             double convergence = plate.convergence() * boundaryStrength;
             double divergence = plate.divergence() * boundaryStrength;
@@ -101,17 +101,21 @@ public record TectonicTerrainFunction() implements DensityFunction {
 
             // Broad uplift sets mountain mass; nested ridged and eroded signals shape peaks.
             double regionalUplift = 0.55 + 0.45 * ((noise(x, z, 13_000.0, 0x5BE0CD19137E2179L) + 1.0) * 0.5);
-            double mass = Math.pow(Math.max(0.0, beltStrength), 1.8);
-            double peakCore = smoothstep(0.20, 0.72, beltStrength) * regionalUplift;
-            double alpinePeaks = Math.pow(Math.max(0.0, peakCore), 3.2) * 850.0;
-            double highland = mass * (760.0 + 300.0 * regionalUplift) + alpinePeaks
-                    + Math.pow(Math.max(0.0, volcanicPotential), 5.0) * 240.0;
+            double mass = Math.pow(Math.max(0.0, beltStrength), 1.15);
+            double peakCore = smoothstep(0.15, 0.62, beltStrength) * regionalUplift;
+            double alpinePeaks = Math.pow(Math.max(0.0, peakCore), 2.6) * 800.0;
+            double highland = mass * (1_000.0 + 180.0 * regionalUplift) + alpinePeaks
+                    + Math.pow(Math.max(0.0, volcanicPotential), 3.0) * 140.0;
             double erosion = (noise(x, z, 8_500.0, 0xCBBB9D5DC1059ED8L) + 1.0) * 0.5;
             double ridged = 1.0 - Math.abs(noise(x, z, 3_200.0, 0x629A292A367CD507L));
             double fineRidges = 1.0 - Math.abs(noise(x, z, 1_050.0, 0x9159015A3070DD17L));
-            double relief = beltStrength * (ridged * 105.0 + fineRidges * 34.0 - erosion * 58.0);
+            double relief = beltStrength * (ridged * 190.0 + fineRidges * 72.0 - erosion * 62.0);
             double roughLowlands = noise(x, z, 2_800.0, 0x152FECD8F70E5939L) * (8.0 + inland * 42.0);
-            return lowlands + inland * (plains - lowlands) + highland + relief + roughLowlands;
+            double surface = lowlands + inland * (plains - lowlands) + highland + relief + roughLowlands;
+            if (surface > 1_700.0) {
+                surface = 1_700.0 + 270.0 * Math.tanh((surface - 1_700.0) / 270.0);
+            }
+            return surface;
         }
 
         private double noise(double x, double z, double scale, long salt) {

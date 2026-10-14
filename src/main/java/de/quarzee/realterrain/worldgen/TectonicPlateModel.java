@@ -3,13 +3,12 @@ package de.quarzee.realterrain.worldgen;
 /** Deterministic moving Voronoi plates used to shape broad mountain belts. */
 final class TectonicPlateModel {
     private static final int CELL_SIZE = 125_000;
-    // Wider margins make convergent belts a meaningful part of each continent,
-    // rather than hairline features that can be missed between sampled columns.
-    private static final double BOUNDARY_WIDTH = 48_000.0;
+    // Broad collision zones make mountain chains continuous and easy to encounter.
+    private static final double BOUNDARY_WIDTH = 72_000.0;
 
     private TectonicPlateModel() {}
 
-    static Signal sample(long seed, int x, int z, ContinentalLandmassFunction.LandmassSampler land) {
+    static Signal sample(long seed, int x, int z) {
         int cellX = floor((double) x / CELL_SIZE);
         int cellZ = floor((double) z / CELL_SIZE);
         Plate first = null;
@@ -19,7 +18,7 @@ final class TectonicPlateModel {
 
         for (int dz = -1; dz <= 1; dz++) {
             for (int dx = -1; dx <= 1; dx++) {
-                Plate candidate = plate(seed, cellX + dx, cellZ + dz, land);
+                Plate candidate = plate(seed, cellX + dx, cellZ + dz);
                 double distance = Math.hypot(x - candidate.x(), z - candidate.z());
                 if (distance < firstDistance) {
                     second = first;
@@ -41,13 +40,13 @@ final class TectonicPlateModel {
         double closingSpeed = (first.velocityX() - second.velocityX()) * nx
                 + (first.velocityZ() - second.velocityZ()) * nz;
         double boundary = 1.0 - smoothstep(0.0, BOUNDARY_WIDTH, secondDistance - firstDistance);
-        double convergence = clamp((closingSpeed - 0.025) / 1.15, 0.0, 1.0);
-        double divergence = clamp((-closingSpeed - 0.025) / 1.15, 0.0, 1.0);
+        double convergence = clamp(closingSpeed / 0.95, 0.0, 1.0);
+        double divergence = clamp(-closingSpeed / 0.95, 0.0, 1.0);
         double subduction = first.continental() == second.continental() ? 0.25 : 1.0;
         return new Signal(boundary, convergence, divergence, boundary * convergence * subduction);
     }
 
-    private static Plate plate(long seed, int cellX, int cellZ, ContinentalLandmassFunction.LandmassSampler land) {
+    private static Plate plate(long seed, int cellX, int cellZ) {
         long key = mix64(seed ^ (long) cellX * 0x9E3779B97F4A7C15L ^ (long) cellZ * 0xC2B2AE3D27D4EB4FL);
         double offsetX = unit(mix64(key ^ 0x243F6A8885A308D3L)) - 0.5;
         double offsetZ = unit(mix64(key ^ 0x13198A2E03707344L)) - 0.5;
@@ -55,7 +54,9 @@ final class TectonicPlateModel {
         double speed = 0.18 + unit(mix64(key ^ 0x082EFA98EC4E6C89L)) * 0.62;
         double px = (cellX + 0.5 + offsetX * 0.62) * CELL_SIZE;
         double pz = (cellZ + 0.5 + offsetZ * 0.62) * CELL_SIZE;
-        boolean continentalCrust = land.sample((int) px, (int) pz) > 0.0F;
+        // Crust type is deterministic per tectonic plate. Terrain uplift is still
+        // masked by the actual continent field in TectonicTerrainFunction.
+        boolean continentalCrust = unit(mix64(key ^ 0x452821E638D01377L)) > 0.36;
         return new Plate(px, pz, Math.cos(angle) * speed, Math.sin(angle) * speed, continentalCrust);
     }
 
