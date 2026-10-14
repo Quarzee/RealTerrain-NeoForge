@@ -32,7 +32,7 @@
 </head>
 <body>
   <header>
-    <div><h1>RealTerrain · World Map</h1><div class="sub">Seed <span id="seed">loading…</span> · 500,000 × 500,000 blocks · north is up</div></div>
+    <div><h1>RealTerrain · World Map</h1><div class="sub">Seed <span id="seed">loading…</span> · 3,000,000 × 3,000,000 block preview · north is up</div></div>
     <div class="actions"><label for="mode">Layer</label><select id="mode"><option value="biome">Biomes</option><option value="height">Height</option><option value="temperature">Temperature</option></select><label for="resolution">Detail</label><select id="resolution"><option>256</option><option>384</option><option>512</option></select><button id="refresh">Render</button></div>
   </header>
   <main>
@@ -58,7 +58,7 @@
       </div>
       <div id="heightLegend" hidden><div class="item"><i class="swatch" style="background:#005FFF"></i>Sea level</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:linear-gradient(90deg,#00ffcc,#00ff00,#ffff00,#ff8000,#ff0000)"></i>Hue shifts every 10 blocks higher</div></div>
       <div id="temperatureLegend" hidden><div class="item"><i class="swatch" style="background:#2537A4"></i>Coldest</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:#F0DB67"></i>Temperate</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:#D43B24"></i>Warmest</div></div>
-      <p class="note">The map samples the active world’s terrain density and biome climate across the full footprint. It previews the generated layout without creating chunks; fine details and structures appear as chunks generate. Temperature is the world generation climate signal, not a Celsius reading.</p>
+      <p class="note">The map samples a 3,000,000 × 3,000,000 block region of the active world’s terrain density and biome climate without creating chunks. The Continental world continues beyond this preview with more large landmasses and oceans. Fine details and structures appear as chunks generate. Temperature is the world generation climate signal, not a Celsius reading.</p>
       <p id="status"></p>
     </aside>
   </main>

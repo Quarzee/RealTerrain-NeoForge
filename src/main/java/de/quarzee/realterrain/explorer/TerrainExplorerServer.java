@@ -37,7 +37,7 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 /** Local, read-only world preview generated from the active world's samplers. */
 public final class TerrainExplorerServer {
     private static final Gson GSON = new Gson();
-    private static final int HALF_FOOTPRINT = 250_000;
+    private static final int HALF_MAP_RANGE = 1_500_000;
     private static final int DEFAULT_SIZE = 256;
     private static final int MAX_SIZE = 512;
     private static final Map<String, Integer> BIOME_COLORS = createBiomeColors();
@@ -135,7 +135,7 @@ public final class TerrainExplorerServer {
             }
             JsonObject result = new JsonObject();
             result.addProperty("seed", Long.toString(target.getSeed()));
-            result.addProperty("halfFootprint", HALF_FOOTPRINT);
+            result.addProperty("halfMapRange", HALF_MAP_RANGE);
             sendJson(exchange, 200, GSON.toJson(result));
         } finally {
             exchange.close();
@@ -151,8 +151,8 @@ public final class TerrainExplorerServer {
             Map<String, String> query = query(exchange);
             int x = parseInt(query.get("x"), 0);
             int z = parseInt(query.get("z"), 0);
-            if (Math.abs(x) > HALF_FOOTPRINT || Math.abs(z) > HALF_FOOTPRINT) {
-                sendText(exchange, 400, "Coordinates must be inside the 500,000 by 500,000 block footprint.");
+            if (Math.abs(x) > HALF_MAP_RANGE || Math.abs(z) > HALF_MAP_RANGE) {
+                sendText(exchange, 400, "Coordinates must be inside the 3,000,000 by 3,000,000 block map preview.");
                 return;
             }
             ServerLevel target = level;
@@ -188,7 +188,7 @@ public final class TerrainExplorerServer {
         int[][] colors = new int[size][size];
         int[][] heights = new int[size][size];
         float[][] temperatures = new float[size][size];
-        double blockStep = (2.0 * HALF_FOOTPRINT) / (size - 1);
+        double blockStep = (2.0 * HALF_MAP_RANGE) / (size - 1);
 
         for (int py = 0; py < size; py++) {
             int z = coordinate(py, size);
@@ -294,7 +294,7 @@ public final class TerrainExplorerServer {
     }
 
     private static int coordinate(int pixel, int size) {
-        return (int) Math.round(-HALF_FOOTPRINT + (2.0 * HALF_FOOTPRINT * pixel) / (size - 1));
+        return (int) Math.round(-HALF_MAP_RANGE + (2.0 * HALF_MAP_RANGE * pixel) / (size - 1));
     }
 
     private static Map<String, Integer> createBiomeColors() {

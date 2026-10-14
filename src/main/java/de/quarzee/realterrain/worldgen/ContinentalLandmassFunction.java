@@ -1,10 +1,5 @@
 package de.quarzee.realterrain.worldgen;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.SplittableRandom;
-
 import com.mojang.serialization.MapCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Interval;
@@ -18,8 +13,9 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 /** Seeded 2D continentalness field shared by vanilla terrain and spawn selection. */
 public record ContinentalLandmassFunction() implements DensityFunction {
     public static final MapCodec<ContinentalLandmassFunction> CODEC = MapCodec.unit(new ContinentalLandmassFunction());
-    private static final int HALF_FOOTPRINT = 250_000;
-    private static final int CALIBRATION_SIDE = 256;
+    private static final double CELL_SPACING = 1_350_000.0;
+    private static final double MAX_CENTER_JITTER = 120_000.0;
+    private static final double MIN_RADIUS = 340_000.0;
 
     @Override
     public DensitySampler compileSampler(CompileContext context) {
@@ -58,133 +54,60 @@ public record ContinentalLandmassFunction() implements DensityFunction {
 
     static final class LandmassSampler {
         private final long seed;
-        private final List<Ellipse> ellipses;
-        private final float[] grid;
 
         LandmassSampler(long seed) {
             this.seed = seed;
-            SplittableRandom random = new SplittableRandom(seed);
-            int count = 6 + random.nextInt(3);
-            // Correlate map coverage slightly with landmass count so all layouts
-            // fit cleanly in the target square without neighboring masses merging.
-            double minLand = 0.25 + (count - 6) * 0.025;
-            double maxLand = 0.29 + (count - 6) * 0.030;
-            double targetLand = minLand + random.nextDouble() * (maxLand - minLand);
-            this.ellipses = List.copyOf(createEllipses(random, count, targetLand));
-
-            int side = CALIBRATION_SIDE;
-            double[] rawScores = new double[side * side];
-            double[] sortedScores = new double[side * side];
-            int i = 0;
-            for (int gz = 0; gz < side; gz++) {
-                int z = -HALF_FOOTPRINT + (int) ((long) (2 * HALF_FOOTPRINT) * gz / (side - 1));
-                for (int gx = 0; gx < side; gx++) {
-                    int x = -HALF_FOOTPRINT + (int) ((long) (2 * HALF_FOOTPRINT) * gx / (side - 1));
-                    double score = rawScore(x, z);
-                    rawScores[i] = score;
-                    sortedScores[i++] = score;
-                }
-            }
-            Arrays.sort(sortedScores);
-            int landIndex = Math.max(0, Math.min(sortedScores.length - 1,
-                    (int) Math.floor((1.0 - targetLand) * sortedScores.length)));
-            double threshold = sortedScores[landIndex];
-            this.grid = new float[rawScores.length];
-            for (int cell = 0; cell < rawScores.length; cell++) {
-                this.grid[cell] = (float) clamp((rawScores[cell] - threshold) * 2.4, -1.0, 1.0);
-            }
-        }
-
-        private static List<Ellipse> createEllipses(SplittableRandom random, int count, double targetLand) {
-            // Keep two large landmasses at the north and south edges for the polar
-            // desert caps. Remaining landmasses sit in the warmer middle latitudes.
-            int[] cells = {0, 1, 2, 3, 4, 5};
-            for (int i = cells.length - 1; i > 0; i--) {
-                int j = random.nextInt(i + 1);
-                int t = cells[i]; cells[i] = cells[j]; cells[j] = t;
-            }
-            List<Ellipse> result = new ArrayList<>(count);
-            double radius = Math.sqrt(targetLand * (4.0 * HALF_FOOTPRINT * HALF_FOOTPRINT)
-                    / (Math.PI * count));
-
-            for (int sign : new int[]{-1, 1}) {
-                double aspect = 0.94 + random.nextDouble() * 0.12;
-                double rx = radius * Math.sqrt(aspect);
-                double rz = radius / Math.sqrt(aspect);
-                result.add(new Ellipse((random.nextDouble() - 0.5) * 24_000.0,
-                        sign * (HALF_FOOTPRINT - 40_000.0), rx, rz,
-                        random.nextDouble() * Math.PI, random.nextLong()));
-            }
-
-            // Six jittered cells keep the remaining continents separated, while
-            // reserving a central cell guarantees land near the default spawn.
-            List<Integer> extraCells = new ArrayList<>(count - 2);
-            extraCells.add(random.nextBoolean() ? 1 : 4);
-            for (int cell : cells) {
-                if (extraCells.size() == count - 2) break;
-                if (!extraCells.contains(cell)) extraCells.add(cell);
-            }
-            for (int cell : extraCells) {
-                int cx = cell % 3;
-                int cz = cell / 3;
-                double centerX = (cx - 1) * 155_000.0 + (random.nextDouble() - 0.5) * 18_000.0;
-                double centerZ = (cz == 0 ? -42_000.0 : 42_000.0) + (random.nextDouble() - 0.5) * 12_000.0;
-                double aspect = 0.92 + random.nextDouble() * 0.16;
-                double rx = radius * Math.sqrt(aspect);
-                double rz = radius / Math.sqrt(aspect);
-                result.add(new Ellipse(centerX, centerZ, rx, rz, random.nextDouble() * Math.PI,
-                        random.nextLong()));
-            }
-            return result;
         }
 
         float sample(int x, int z) {
-            if (x < -HALF_FOOTPRINT || x > HALF_FOOTPRINT || z < -HALF_FOOTPRINT || z > HALF_FOOTPRINT) {
-                return -1.0F;
+            double warpX = valueNoise(x, z, 520_000.0, 0x13579BDFL) * 48_000.0
+                    + valueNoise(x, z, 210_000.0, 0x2468ACE0L) * 22_000.0
+                    + valueNoise(x, z, 75_000.0, 0xC0AC29B7L) * 8_000.0;
+            double warpZ = valueNoise(x, z, 480_000.0, 0x10293847L) * 42_000.0
+                    + valueNoise(x, z, 195_000.0, 0x56473829L) * 20_000.0
+                    + valueNoise(x, z, 68_000.0, 0x3F84D5B5L) * 7_000.0;
+            int cellX = floor((x + warpX + CELL_SPACING * 0.5) / CELL_SPACING);
+            int cellZ = floor((z + warpZ + CELL_SPACING * 0.5) / CELL_SPACING);
+            double best = -10.0;
+            for (int gz = cellZ - 1; gz <= cellZ + 1; gz++) {
+                for (int gx = cellX - 1; gx <= cellX + 1; gx++) {
+                    best = Math.max(best, continentScore(x + warpX, z + warpZ, gx, gz));
+                }
             }
-            double gx = (x + (double) HALF_FOOTPRINT) * (CALIBRATION_SIDE - 1) / (2.0 * HALF_FOOTPRINT);
-            double gz = (z + (double) HALF_FOOTPRINT) * (CALIBRATION_SIDE - 1) / (2.0 * HALF_FOOTPRINT);
-            int x0 = Math.min(CALIBRATION_SIDE - 2, (int) gx);
-            int z0 = Math.min(CALIBRATION_SIDE - 2, (int) gz);
-            double tx = gx - x0;
-            double tz = gz - z0;
-            int row = z0 * CALIBRATION_SIDE;
-            double a = lerp(grid[row + x0], grid[row + x0 + 1], tx);
-            double b = lerp(grid[row + CALIBRATION_SIDE + x0], grid[row + CALIBRATION_SIDE + x0 + 1], tx);
-            return (float) lerp(a, b, tz);
+            return (float) clamp(best * 2.4, -1.0, 1.0);
         }
 
-        private double rawScore(double x, double z) {
-            // Strong, multiscale displacement bends the broad continental margins into
-            // peninsulas and deep embayments instead of merely roughening an ellipse.
-            double warpX = valueNoise(x, z, 125_000.0, 0x13579BDFL) * 34_000.0
-                    + valueNoise(x, z, 48_000.0, 0x2468ACE0L) * 17_000.0
-                    + valueNoise(x, z, 17_000.0, 0xC0AC29B7L) * 6_000.0;
-            double warpZ = valueNoise(x, z, 118_000.0, 0x10293847L) * 30_000.0
-                    + valueNoise(x, z, 43_000.0, 0x56473829L) * 15_000.0
-                    + valueNoise(x, z, 15_000.0, 0x3F84D5B5L) * 5_500.0;
-            double best = -10.0;
-            for (Ellipse e : ellipses) {
-                double dx = x + warpX - e.x;
-                double dz = z + warpZ - e.z;
-                double u = (dx * e.cos - dz * e.sin) / e.radiusX;
-                double v = (dx * e.sin + dz * e.cos) / e.radiusZ;
-                double angle = Math.atan2(v, u);
-                double radial = Math.sqrt(u * u + v * v);
-                double lobes = 0.0;
-                for (int harmonic = 2; harmonic <= 7; harmonic++) {
-                    long h = mix64(e.noiseSalt + harmonic * 0x9E3779B97F4A7C15L);
-                    double phase = (h >>> 11) * 0x1.0p-53 * Math.PI * 2.0;
-                    double amplitude = 0.07 + ((mix64(h) >>> 11) * 0x1.0p-53) * 0.12;
-                    lobes += Math.sin(harmonic * angle + phase) * amplitude;
-                }
-                double edge = valueNoise(x, z, 72_000.0, e.noiseSalt) * 0.20
-                        + valueNoise(x, z, 31_000.0, e.noiseSalt ^ 0x6A09E667F3BCC909L) * 0.13
-                        + valueNoise(x, z, 11_000.0, e.noiseSalt ^ 0xBB67AE8584CAA73BL) * 0.065
-                        + valueNoise(x, z, 3_500.0, e.noiseSalt ^ 0x3C6EF372FE94F82BL) * 0.025;
-                best = Math.max(best, 1.0 - radial / Math.max(0.45, 1.0 + lobes) + edge);
+        private double continentScore(double x, double z, int cellX, int cellZ) {
+            long cellSeed = mix64(seed ^ (long) cellX * 0x9E3779B97F4A7C15L
+                    ^ (long) cellZ * 0xC2B2AE3D27D4EB4FL);
+            boolean originCell = cellX == 0 && cellZ == 0;
+            double centerX = cellX * CELL_SPACING + (originCell ? 0.0
+                    : (unit(mix64(cellSeed + 0x510E527FADE682D1L)) - 0.5) * 2.0 * MAX_CENTER_JITTER);
+            double centerZ = cellZ * CELL_SPACING + (originCell ? 0.0
+                    : (unit(mix64(cellSeed + 0x9B05688C2B3E6C1FL)) - 0.5) * 2.0 * MAX_CENTER_JITTER);
+            double radius = MIN_RADIUS + unit(mix64(cellSeed + 0x1F83D9ABFB41BD6BL)) * 140_000.0;
+            double aspect = 0.86 + unit(mix64(cellSeed + 0x5BE0CD19137E2179L)) * 0.28;
+            double rotation = unit(mix64(cellSeed + 0xBB67AE8584CAA73BL)) * Math.PI * 2.0;
+            double dx = x - centerX;
+            double dz = z - centerZ;
+            double cos = Math.cos(rotation);
+            double sin = Math.sin(rotation);
+            double u = (dx * cos - dz * sin) / (radius * Math.sqrt(aspect));
+            double v = (dx * sin + dz * cos) / (radius / Math.sqrt(aspect));
+            double angle = Math.atan2(v, u);
+            double radial = Math.sqrt(u * u + v * v);
+            double lobes = 0.0;
+            for (int harmonic = 2; harmonic <= 7; harmonic++) {
+                long h = mix64(cellSeed + harmonic * 0xD6E8FEB86659FD93L);
+                double phase = unit(h) * Math.PI * 2.0;
+                double amplitude = 0.06 + unit(mix64(h)) * 0.08;
+                lobes += Math.sin(harmonic * angle + phase) * amplitude;
             }
-            return best;
+            double edge = valueNoise(x, z, 190_000.0, cellSeed) * 0.14
+                    + valueNoise(x, z, 76_000.0, cellSeed ^ 0x6A09E667F3BCC909L) * 0.08
+                    + valueNoise(x, z, 26_000.0, cellSeed ^ 0xBB67AE8584CAA73BL) * 0.04
+                    + valueNoise(x, z, 8_000.0, cellSeed ^ 0x3C6EF372FE94F82BL) * 0.02;
+            return 1.0 - radial / Math.max(0.45, 1.0 + lobes) + edge;
         }
 
         private double valueNoise(double x, double z, double scale, long salt) {
@@ -214,12 +137,6 @@ public record ContinentalLandmassFunction() implements DensityFunction {
         private static double smooth(double t) { return t * t * (3.0 - 2.0 * t); }
         private static double lerp(double a, double b, double t) { return a + (b - a) * t; }
         private static double clamp(double value, double min, double max) { return Math.max(min, Math.min(max, value)); }
-    }
-
-    private record Ellipse(double x, double z, double radiusX, double radiusZ, double rotation,
-                           double cos, double sin, long noiseSalt) {
-        private Ellipse(double x, double z, double radiusX, double radiusZ, double rotation, long noiseSalt) {
-            this(x, z, radiusX, radiusZ, rotation, Math.cos(rotation), Math.sin(rotation), noiseSalt);
-        }
+        private static double unit(long value) { return (value >>> 11) * 0x1.0p-53; }
     }
 }
