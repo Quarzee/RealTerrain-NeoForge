@@ -165,7 +165,7 @@
     ],
     [
       "minecraft:glow_lichen",
-      "minecraft:trees_snowy",
+      "realterrain:polar_desert_sparse_trees",
       "minecraft:flower_default",
       "minecraft:patch_grass_badlands",
       "minecraft:brown_mushroom_normal",

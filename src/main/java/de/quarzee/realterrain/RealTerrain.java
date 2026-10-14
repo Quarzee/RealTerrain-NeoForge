@@ -23,11 +23,14 @@ import de.quarzee.realterrain.explorer.TerrainExplorerServer;
 import de.quarzee.realterrain.worldgen.ContinentalLandmassFunction;
 import de.quarzee.realterrain.worldgen.TectonicTerrainFunction;
 import de.quarzee.realterrain.worldgen.TectonicMountainFunction;
+import de.quarzee.realterrain.worldgen.ContinentalLatitudeFunction;
+import de.quarzee.realterrain.worldgen.WorldSizeSelection;
 
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import de.quarzee.realterrain.worldgen.StartingBiomeHandler;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
@@ -47,6 +50,7 @@ public class RealTerrain {
         NeoForge.EVENT_BUS.addListener(StartingBiomeHandler::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(RealTerrain::registerCommands);
         NeoForge.EVENT_BUS.addListener(RealTerrain::onServerStopping);
+        NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> WorldSizeSelection.onServerStarting(event.getServer()));
     }
 
     private static void registerDensityFunction(RegisterEvent event) {
@@ -59,6 +63,9 @@ public class RealTerrain {
         event.register(Registries.DENSITY_FUNCTION_TYPE,
                 Identifier.fromNamespaceAndPath(MODID, "tectonic_mountain"),
                 () -> TectonicMountainFunction.CODEC);
+        event.register(Registries.DENSITY_FUNCTION_TYPE,
+                Identifier.fromNamespaceAndPath(MODID, "continental_latitude"),
+                () -> ContinentalLatitudeFunction.CODEC);
     }
 
     private static void registerCommands(RegisterCommandsEvent event) {

@@ -1,6 +1,7 @@
 {
   "generator.realterrain.continental": "Continental World",
   "gui.realterrain.starting_biome": "Starting biome",
+  "gui.realterrain.world_size": "World size",
   "gui.realterrain.starting_biome.default": "Default spawn",
   "gui.realterrain.starting_biome.tropical_rainforest": "Tropical rainforest",
   "gui.realterrain.starting_biome.tropical_seasonal_forest": "Tropical seasonal forest",

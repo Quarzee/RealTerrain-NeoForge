@@ -37,7 +37,6 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 /** Local, read-only world preview generated from the active world's samplers. */
 public final class TerrainExplorerServer {
     private static final Gson GSON = new Gson();
-    private static final int HALF_MAP_RANGE = 1_500_000;
     private static final int DEFAULT_SIZE = 256;
     private static final int MAX_SIZE = 512;
     private static final Map<String, Integer> BIOME_COLORS = createBiomeColors();
@@ -135,7 +134,7 @@ public final class TerrainExplorerServer {
             }
             JsonObject result = new JsonObject();
             result.addProperty("seed", Long.toString(target.getSeed()));
-            result.addProperty("halfMapRange", HALF_MAP_RANGE);
+            result.addProperty("halfMapRange", target.getWorldBorder().getSize() / 2.0);
             sendJson(exchange, 200, GSON.toJson(result));
         } finally {
             exchange.close();
@@ -151,13 +150,14 @@ public final class TerrainExplorerServer {
             Map<String, String> query = query(exchange);
             int x = parseInt(query.get("x"), 0);
             int z = parseInt(query.get("z"), 0);
-            if (Math.abs(x) > HALF_MAP_RANGE || Math.abs(z) > HALF_MAP_RANGE) {
-                sendText(exchange, 400, "Coordinates must be inside the 3,000,000 by 3,000,000 block map preview.");
-                return;
-            }
             ServerLevel target = level;
             if (target == null) {
                 sendText(exchange, 503, "The world is no longer available.");
+                return;
+            }
+            double halfRange = target.getWorldBorder().getSize() / 2.0;
+            if (Math.abs(x) > halfRange || Math.abs(z) > halfRange) {
+                sendText(exchange, 400, "Coordinates must be inside the selected world size.");
                 return;
             }
             Sample sample = sample(target, x, z);
@@ -188,12 +188,13 @@ public final class TerrainExplorerServer {
         int[][] colors = new int[size][size];
         int[][] heights = new int[size][size];
         float[][] temperatures = new float[size][size];
-        double blockStep = (2.0 * HALF_MAP_RANGE) / (size - 1);
+        double halfRange = level.getWorldBorder().getSize() / 2.0;
+        double blockStep = (2.0 * halfRange) / (size - 1);
 
         for (int py = 0; py < size; py++) {
-            int z = coordinate(py, size);
+            int z = coordinate(py, size, halfRange);
             for (int px = 0; px < size; px++) {
-                int x = coordinate(px, size);
+                int x = coordinate(px, size, halfRange);
                 int surfaceY = findSurfaceY(densitySamplers, density, generator.getMinY(),
                         generator.getMinY() + generator.getGenDepth() - 1, x, z);
                 int biomeY = Math.max(surfaceY, generator.getSeaLevel());
@@ -256,8 +257,8 @@ public final class TerrainExplorerServer {
             double depth = Mth.clamp((height + 64.0) / (seaLevel + 64.0), 0.0, 1.0);
             return blend(0x001B48, 0x005FFF, depth);
         }
-        int tenBlockBands = (height - seaLevel) / 10;
-        float hue = Math.max(0.0F, 216.0F - tenBlockBands * 2.0F) / 360.0F;
+        int fiftyBlockBands = (height - seaLevel) / 50;
+        float hue = Math.max(0.0F, 216.0F - fiftyBlockBands * 3.0F) / 360.0F;
         return Mth.hsvToRgb(hue, 1.0F, 1.0F) & 0xFFFFFF;
     }
 
@@ -293,8 +294,8 @@ public final class TerrainExplorerServer {
         return generator;
     }
 
-    private static int coordinate(int pixel, int size) {
-        return (int) Math.round(-HALF_MAP_RANGE + (2.0 * HALF_MAP_RANGE * pixel) / (size - 1));
+    private static int coordinate(int pixel, int size, double halfRange) {
+        return (int) Math.round(-halfRange + (2.0 * halfRange * pixel) / (size - 1));
     }
 
     private static Map<String, Integer> createBiomeColors() {

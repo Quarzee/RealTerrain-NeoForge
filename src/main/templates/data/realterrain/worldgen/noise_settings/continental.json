@@ -6,7 +6,7 @@
   "material_rule": "minecraft:overworld",
   "noise": {
     "min_y": -64,
-    "height": 2096
+    "height": 4096
   },
   "noise_router": {
     "temperature": {
@@ -15,23 +15,7 @@
         "type": "minecraft:mul",
         "left": 0.85,
         "right": {
-          "type": "minecraft:add",
-          "left": 1.0,
-          "right": {
-            "type": "minecraft:mul",
-            "left": -2.0,
-            "right": {
-              "type": "minecraft:abs",
-              "input": {
-                "type": "minecraft:gradient",
-                "axis": "z",
-                "from_coordinate": -250000,
-                "to_coordinate": 250000,
-                "from_value": -1.0,
-                "to_value": 1.0
-              }
-            }
-          }
+          "type": "realterrain:continental_latitude"
         }
       },
       "right": {

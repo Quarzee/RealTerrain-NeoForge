@@ -32,7 +32,7 @@
 </head>
 <body>
   <header>
-    <div><h1>RealTerrain · World Map</h1><div class="sub">Seed <span id="seed">loading…</span> · 3,000,000 × 3,000,000 block preview · north is up</div></div>
+    <div><h1>RealTerrain · World Map</h1><div class="sub">Seed <span id="seed">loading…</span> · <span id="worldSize">loading world size…</span> · north is up</div></div>
     <div class="actions"><label for="mode">Layer</label><select id="mode"><option value="biome">Biomes</option><option value="height">Height</option><option value="temperature">Temperature</option></select><label for="resolution">Detail</label><select id="resolution"><option>256</option><option>384</option><option>512</option></select><button id="refresh">Render</button></div>
   </header>
   <main>
@@ -56,9 +56,9 @@
         <div class="item"><i class="swatch" style="background:#B8E7F3"></i>Ice sea</div>
         <div class="item"><i class="swatch" style="background:#4F9EA8"></i>Other oceans</div>
       </div>
-      <div id="heightLegend" hidden><div class="item"><i class="swatch" style="background:#005FFF"></i>Sea level</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:linear-gradient(90deg,#00ffcc,#00ff00,#ffff00,#ff8000,#ff0000)"></i>Hue shifts every 10 blocks higher</div></div>
+      <div id="heightLegend" hidden><div class="item"><i class="swatch" style="background:#005FFF"></i>Sea level</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:linear-gradient(90deg,#00ffcc,#00ff00,#ffff00,#ff8000,#ff0000)"></i>Hue shifts every 50 blocks higher</div></div>
       <div id="temperatureLegend" hidden><div class="item"><i class="swatch" style="background:#2537A4"></i>Coldest</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:#F0DB67"></i>Temperate</div><div class="item" style="margin-top:7px"><i class="swatch" style="background:#D43B24"></i>Warmest</div></div>
-      <p class="note">The map samples a 3,000,000 × 3,000,000 block region of the active world’s terrain density and biome climate without creating chunks. The Continental world continues beyond this preview with more large landmasses and oceans. Fine details and structures appear as chunks generate. Temperature is the world generation climate signal, not a Celsius reading.</p>
+      <p class="note">The map samples the selected square world footprint using terrain density and biome climate without creating chunks. Fine details and structures appear as chunks generate. Temperature is the world generation climate signal, not a Celsius reading.</p>
       <p id="status"></p>
     </aside>
   </main>
@@ -67,11 +67,18 @@
     const marker = document.getElementById('marker');
     const point = document.getElementById('point');
     const status = document.getElementById('status');
+    let halfMapRange = 1500000;
     async function render() {
       status.textContent = 'Rendering map…';
       document.getElementById('seed').textContent = 'loading…';
       const size = document.getElementById('resolution').value;
       const mode = document.getElementById('mode').value;
+      try {
+        const info = await (await fetch('/api/status')).json();
+        halfMapRange = Number(info.halfMapRange) || halfMapRange;
+        document.getElementById('seed').textContent = info.seed;
+        document.getElementById('worldSize').textContent = (halfMapRange * 2).toLocaleString() + ' × ' + (halfMapRange * 2).toLocaleString() + ' blocks';
+      } catch (_) { }
       image.src = '/api/map.png?size=' + size + '&mode=' + mode + '&t=' + Date.now();
       const titles = { biome:'Biomes', height:'Height', temperature:'Temperature' };
       document.getElementById('legendTitle').textContent = titles[mode];
@@ -98,8 +105,8 @@
       const box = image.getBoundingClientRect();
       const fx = Math.max(0, Math.min(1, (event.clientX - box.left) / box.width));
       const fz = Math.max(0, Math.min(1, (event.clientY - box.top) / box.height));
-      const x = Math.round(-250000 + fx * 500000);
-      const z = Math.round(-250000 + fz * 500000);
+      const x = Math.round(-halfMapRange + fx * 2 * halfMapRange);
+      const z = Math.round(-halfMapRange + fz * 2 * halfMapRange);
       marker.style.display = 'block'; marker.style.left = (fx * 100) + '%'; marker.style.top = (fz * 100) + '%';
       point.textContent = 'Sampling…';
       try {

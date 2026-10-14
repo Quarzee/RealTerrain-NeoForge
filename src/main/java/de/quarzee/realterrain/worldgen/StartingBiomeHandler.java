@@ -13,7 +13,7 @@ import net.minecraft.world.level.storage.LevelData;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 public final class StartingBiomeHandler {
-    private static final int SEARCH_RADIUS = 250_000;
+    private static final int MAX_SEARCH_RADIUS = 250_000;
     private static final int SAMPLE_STEP_QUARTS = 256; // 1,024 blocks
 
     private StartingBiomeHandler() {}
@@ -23,11 +23,12 @@ public final class StartingBiomeHandler {
         if (!(player.level() instanceof ServerLevel level)) return;
         StartingBiomeSelection.ClimateType target = StartingBiomeSelection.consume(level.getSeed());
         if (target == null || !level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) return;
+        int searchRadius = (int) Math.min(MAX_SEARCH_RADIUS, WorldSizeSelection.halfWorldSize() * 0.9);
 
         BiomeSource biomeSource = level.getChunkSource().getGenerator().getBiomeSource();
         RandomState randomState = level.getChunkSource().randomState();
         Pair<BlockPos, net.minecraft.core.Holder<Biome>> match = biomeSource.findBiomeHorizontal(
-                0, 63, 0, SEARCH_RADIUS, SAMPLE_STEP_QUARTS,
+                0, 63, 0, searchRadius, SAMPLE_STEP_QUARTS,
                 target::matches, RandomSource.create(level.getSeed()), true, randomState);
 
         if (match == null) {
