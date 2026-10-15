@@ -122,6 +122,10 @@ public record TectonicTerrainFunction() implements DensityFunction {
                     + needlePeaks;
             double roughLowlands = noise(x, z, 2_800.0, 0x152FECD8F70E5939L) * (8.0 + inland * 42.0);
             double surface = lowlands + inland * (plains - lowlands) + highland + relief + roughLowlands;
+            // Reduce vertical relief on compact presets while preserving sea-level
+            // crossings, so the requested land/water coverage does not shift.
+            double heightScale = Math.sqrt(Math.min(1.0, WorldSizeSelection.currentSize() / 1_000_000.0));
+            surface = 63.0 + (surface - 63.0) * heightScale;
             if (surface > 1_880.0) {
                 surface = 1_880.0 + 120.0 * Math.tanh((surface - 1_880.0) / 120.0);
             }

@@ -11,7 +11,7 @@ final class TectonicPlateModel {
     static Signal sample(long seed, int x, int z) {
         // Keep comparable plate coverage at every world-size preset. Small worlds
         // otherwise sample only a fraction of one plate and often have no ranges.
-        double worldScale = 1_500_000.0 / WorldSizeSelection.halfWorldSize();
+        double worldScale = Math.sqrt(1_500_000.0 / WorldSizeSelection.halfWorldSize());
         double worldX = x * worldScale;
         double worldZ = z * worldScale;
         int cellX = floor(worldX / CELL_SIZE);
