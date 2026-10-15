@@ -258,7 +258,7 @@ public final class TerrainExplorerServer {
             return blend(0x001B48, 0x005FFF, depth);
         }
         int fiftyBlockBands = (height - seaLevel) / 50;
-        float hue = Math.max(0.0F, 216.0F - fiftyBlockBands * 3.0F) / 360.0F;
+        float hue = Math.max(0.0F, 216.0F - fiftyBlockBands * 6.0F) / 360.0F;
         return Mth.hsvToRgb(hue, 1.0F, 1.0F) & 0xFFFFFF;
     }
 

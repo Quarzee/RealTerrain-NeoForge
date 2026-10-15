@@ -6,7 +6,7 @@
   "material_rule": "minecraft:overworld",
   "noise": {
     "min_y": -64,
-    "height": 4064
+    "height": 2096
   },
   "noise_router": {
     "temperature": {
