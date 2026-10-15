@@ -103,9 +103,10 @@ public record TectonicTerrainFunction() implements DensityFunction {
             // Delay most uplift until farther inside a broad belt so its foothills
             // rise gently instead of forming an abrupt wall at the boundary.
             double mass = Math.pow(Math.max(0.0, beltStrength), 1.6);
-            // Restrict the highest alpine core to the strongest part of each belt.
-            double peakCore = Math.pow(smoothstep(0.68, 1.0, beltStrength), 6.0);
-            double alpinePeaks = peakCore * peakCore * (1_250.0 + 550.0 * regionalUplift);
+            // Keep a substantial alpine core, but concentrate its topmost elevations
+            // near the center of each belt instead of spreading a broad summit plateau.
+            double peakCore = smoothstep(0.48, 0.88, beltStrength);
+            double alpinePeaks = Math.pow(peakCore, 3.0) * (1_350.0 + 450.0 * regionalUplift);
             double highland = mass * (720.0 + 180.0 * regionalUplift) + alpinePeaks
                     + Math.pow(Math.max(0.0, volcanicPotential), 2.4) * 300.0;
             double erosion = (noise(x, z, 1_800.0, 0xCBBB9D5DC1059ED8L) + 1.0) * 0.5;
@@ -114,15 +115,15 @@ public record TectonicTerrainFunction() implements DensityFunction {
             double roughRidges = Math.pow(Math.max(0.0, 1.0 - Math.abs(noise(x, z, 84.0, 0xA54FF53A5F1D36F1L))), 3.0);
             double summitNoise = Math.max(0.0, Math.min(1.0,
                     (noise(x, z, 64.0, 0x3C6EF372FE94F82BL) + 0.15) / 1.15));
-            double needlePeaks = Math.pow(summitNoise, 16.0) * 1_100.0
+            double needlePeaks = Math.pow(summitNoise, 8.0) * 850.0
                     * smoothstep(0.45, 0.72, beltStrength);
             double relief = Math.pow(Math.max(0.0, beltStrength), 1.35)
                     * (ridged * 340.0 + fineRidges * 190.0 + roughRidges * 180.0 - erosion * 85.0)
                     + needlePeaks;
             double roughLowlands = noise(x, z, 2_800.0, 0x152FECD8F70E5939L) * (8.0 + inland * 42.0);
             double surface = lowlands + inland * (plains - lowlands) + highland + relief + roughLowlands;
-            if (surface > 1_820.0) {
-                surface = 1_820.0 + 180.0 * Math.tanh((surface - 1_820.0) / 180.0);
+            if (surface > 1_880.0) {
+                surface = 1_880.0 + 120.0 * Math.tanh((surface - 1_880.0) / 120.0);
             }
             return surface;
         }
