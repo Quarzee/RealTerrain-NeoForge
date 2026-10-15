@@ -4,7 +4,7 @@ package de.quarzee.realterrain.worldgen;
 final class TectonicPlateModel {
     private static final int CELL_SIZE = 125_000;
     // Broad collision zones make mountain chains continuous and easy to encounter.
-    private static final double BOUNDARY_WIDTH = 72_000.0;
+    private static final double BOUNDARY_WIDTH = 144_000.0;
 
     private TectonicPlateModel() {}
 

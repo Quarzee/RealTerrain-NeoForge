@@ -100,15 +100,25 @@ public record TectonicTerrainFunction() implements DensityFunction {
 
             // Broad uplift sets mountain mass; nested ridged and eroded signals shape peaks.
             double regionalUplift = 0.55 + 0.45 * ((noise(x, z, 13_000.0, 0x5BE0CD19137E2179L) + 1.0) * 0.5);
-            double mass = Math.pow(Math.max(0.0, beltStrength), 1.15);
-            double peakCore = smoothstep(0.25, 0.80, beltStrength) * regionalUplift;
-            double alpinePeaks = Math.pow(Math.max(0.0, peakCore), 4.0) * 1_700.0;
-            double highland = mass * (950.0 + 220.0 * regionalUplift) + alpinePeaks
+            // Delay most uplift until farther inside a broad belt so its foothills
+            // rise gently instead of forming an abrupt wall at the boundary.
+            double mass = Math.pow(Math.max(0.0, beltStrength), 1.6);
+            // Restrict the highest alpine core to the strongest part of each belt.
+            double peakCore = Math.pow(smoothstep(0.68, 1.0, beltStrength), 6.0);
+            double alpinePeaks = peakCore * peakCore * (1_250.0 + 550.0 * regionalUplift);
+            double highland = mass * (720.0 + 180.0 * regionalUplift) + alpinePeaks
                     + Math.pow(Math.max(0.0, volcanicPotential), 2.4) * 300.0;
-            double erosion = (noise(x, z, 8_500.0, 0xCBBB9D5DC1059ED8L) + 1.0) * 0.5;
-            double ridged = 1.0 - Math.abs(noise(x, z, 3_200.0, 0x629A292A367CD507L));
-            double fineRidges = 1.0 - Math.abs(noise(x, z, 1_050.0, 0x9159015A3070DD17L));
-            double relief = beltStrength * (ridged * 420.0 + fineRidges * 190.0 - erosion * 105.0);
+            double erosion = (noise(x, z, 1_800.0, 0xCBBB9D5DC1059ED8L) + 1.0) * 0.5;
+            double ridged = 1.0 - Math.abs(noise(x, z, 720.0, 0x629A292A367CD507L));
+            double fineRidges = 1.0 - Math.abs(noise(x, z, 220.0, 0x9159015A3070DD17L));
+            double roughRidges = Math.pow(Math.max(0.0, 1.0 - Math.abs(noise(x, z, 84.0, 0xA54FF53A5F1D36F1L))), 3.0);
+            double summitNoise = Math.max(0.0, Math.min(1.0,
+                    (noise(x, z, 64.0, 0x3C6EF372FE94F82BL) + 0.15) / 1.15));
+            double needlePeaks = Math.pow(summitNoise, 16.0) * 1_100.0
+                    * smoothstep(0.45, 0.72, beltStrength);
+            double relief = Math.pow(Math.max(0.0, beltStrength), 1.35)
+                    * (ridged * 340.0 + fineRidges * 190.0 + roughRidges * 180.0 - erosion * 85.0)
+                    + needlePeaks;
             double roughLowlands = noise(x, z, 2_800.0, 0x152FECD8F70E5939L) * (8.0 + inland * 42.0);
             double surface = lowlands + inland * (plains - lowlands) + highland + relief + roughLowlands;
             if (surface > 1_820.0) {
