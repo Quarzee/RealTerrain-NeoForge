@@ -29,12 +29,11 @@ public record ContinentalLandmassFunction() implements DensityFunction {
             @Override
             public void sampleVolume(SamplerContext context, DensityBuffer out, DensityVolume volume) {
                 int index = 0;
-                for (int yi = 0; yi < volume.sizeY(); yi++) {
-                    for (int zi = 0; zi < volume.sizeZ(); zi++) {
-                        int z = volume.blockZ(zi);
-                        for (int xi = 0; xi < volume.sizeX(); xi++) {
-                            out.set(index++, sampler.sample(volume.blockX(xi), z));
-                        }
+                for (int zi = 0; zi < volume.sizeZ(); zi++) {
+                    int z = volume.blockZ(zi);
+                    for (int xi = 0; xi < volume.sizeX(); xi++) {
+                        float value = sampler.sample(volume.blockX(xi), z);
+                        for (int yi = 0; yi < volume.sizeY(); yi++) out.set(index++, value);
                     }
                 }
             }

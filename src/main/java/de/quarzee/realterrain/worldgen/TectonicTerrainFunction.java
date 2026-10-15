@@ -44,20 +44,13 @@ public record TectonicTerrainFunction() implements DensityFunction {
 
             @Override
             public void sampleVolume(SamplerContext context, DensityBuffer out, DensityVolume volume) {
-                double[] surfaces = new double[volume.sizeX() * volume.sizeZ()];
+                int index = 0;
                 for (int zi = 0; zi < volume.sizeZ(); zi++) {
                     int z = volume.blockZ(zi);
                     for (int xi = 0; xi < volume.sizeX(); xi++) {
-                        surfaces[zi * volume.sizeX() + xi] = sampler.surfaceHeight(volume.blockX(xi), z);
-                    }
-                }
-
-                int index = 0;
-                for (int yi = 0; yi < volume.sizeY(); yi++) {
-                    int y = volume.blockY(yi);
-                    for (int zi = 0; zi < volume.sizeZ(); zi++) {
-                        for (int xi = 0; xi < volume.sizeX(); xi++) {
-                            double surface = surfaces[zi * volume.sizeX() + xi];
+                        double surface = sampler.surfaceHeight(volume.blockX(xi), z);
+                        for (int yi = 0; yi < volume.sizeY(); yi++) {
+                            int y = volume.blockY(yi);
                             // A gentle vertical gradient keeps the surface smooth while leaving
                             // enough range for vanilla's cave and surface density operations.
                             out.set(index++, (float) ((surface - y) * 0.025));
