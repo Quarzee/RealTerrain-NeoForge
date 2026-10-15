@@ -21,7 +21,7 @@ public record TectonicTerrainFunction() implements DensityFunction {
         TectonicPlateModel.Signal plate = TectonicPlateModel.sample(seed, x, z);
         double beltStrength = Math.max(plate.convergence() * plate.boundaryStrength(),
                 Math.max(plate.volcanicPotential(), plate.divergence() * plate.boundaryStrength() * 0.16));
-        double inland = smoothstep(0.02, 0.56, continentalness);
+        double inland = smoothstep(0.16, 0.68, continentalness);
         return beltStrength * inland;
     }
 
@@ -82,9 +82,9 @@ public record TectonicTerrainFunction() implements DensityFunction {
         private double surfaceHeight(int x, int z) {
             double continentalness = land.sample(x, z);
             // Keep the continental shelves below sea level and lift coasts gradually.
-            double inland = smoothstep(-0.24, 0.32, continentalness);
-            double oceanNoise = noise(x, z, 24_000.0, 0x6A09E667F3BCC909L);
-            double lowlands = 25.0 + oceanNoise * 18.0;
+            double inland = smoothstep(-0.40, 0.48, continentalness);
+            double oceanNoise = noise(x, z, 36_000.0, 0x6A09E667F3BCC909L);
+            double lowlands = 18.0 + oceanNoise * 10.0;
             double plains = 73.0 + inland * (92.0 + noise(x, z, 18_000.0, 0xBB67AE8584CAA73BL) * 34.0);
 
             // Moving plate boundaries replace the previous arbitrary straight belts.
@@ -96,7 +96,7 @@ public record TectonicTerrainFunction() implements DensityFunction {
             // The plate model already folds the boundary envelope into volcanic potential.
             double volcanicPotential = plate.volcanicPotential();
             double beltStrength = Math.max(convergence, Math.max(volcanicPotential, divergence * 0.16));
-            beltStrength *= smoothstep(0.02, 0.56, continentalness);
+            beltStrength *= smoothstep(0.16, 0.68, continentalness);
 
             // Broad uplift sets mountain mass; nested ridged and eroded signals shape peaks.
             double regionalUplift = 0.55 + 0.45 * ((noise(x, z, 13_000.0, 0x5BE0CD19137E2179L) + 1.0) * 0.5);

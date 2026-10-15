@@ -9,8 +9,13 @@ final class TectonicPlateModel {
     private TectonicPlateModel() {}
 
     static Signal sample(long seed, int x, int z) {
-        int cellX = floor((double) x / CELL_SIZE);
-        int cellZ = floor((double) z / CELL_SIZE);
+        // Keep comparable plate coverage at every world-size preset. Small worlds
+        // otherwise sample only a fraction of one plate and often have no ranges.
+        double worldScale = 1_500_000.0 / WorldSizeSelection.halfWorldSize();
+        double worldX = x * worldScale;
+        double worldZ = z * worldScale;
+        int cellX = floor(worldX / CELL_SIZE);
+        int cellZ = floor(worldZ / CELL_SIZE);
         Plate first = null;
         Plate second = null;
         double firstDistance = Double.POSITIVE_INFINITY;
@@ -19,7 +24,7 @@ final class TectonicPlateModel {
         for (int dz = -1; dz <= 1; dz++) {
             for (int dx = -1; dx <= 1; dx++) {
                 Plate candidate = plate(seed, cellX + dx, cellZ + dz);
-                double distance = Math.hypot(x - candidate.x(), z - candidate.z());
+                double distance = Math.hypot(worldX - candidate.x(), worldZ - candidate.z());
                 if (distance < firstDistance) {
                     second = first;
                     secondDistance = firstDistance;
