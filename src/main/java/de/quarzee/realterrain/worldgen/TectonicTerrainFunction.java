@@ -44,14 +44,20 @@ public record TectonicTerrainFunction() implements DensityFunction {
 
             @Override
             public void sampleVolume(SamplerContext context, DensityBuffer out, DensityVolume volume) {
-                int index = 0;
+                double[] surfaces = new double[volume.sizeX() * volume.sizeZ()];
                 for (int zi = 0; zi < volume.sizeZ(); zi++) {
                     int z = volume.blockZ(zi);
                     for (int xi = 0; xi < volume.sizeX(); xi++) {
-                        int x = volume.blockX(xi);
-                        double surface = sampler.surfaceHeight(x, z);
-                        for (int yi = 0; yi < volume.sizeY(); yi++) {
-                            int y = volume.blockY(yi);
+                        surfaces[zi * volume.sizeX() + xi] = sampler.surfaceHeight(volume.blockX(xi), z);
+                    }
+                }
+
+                int index = 0;
+                for (int yi = 0; yi < volume.sizeY(); yi++) {
+                    int y = volume.blockY(yi);
+                    for (int zi = 0; zi < volume.sizeZ(); zi++) {
+                        for (int xi = 0; xi < volume.sizeX(); xi++) {
+                            double surface = surfaces[zi * volume.sizeX() + xi];
                             // A gentle vertical gradient keeps the surface smooth while leaving
                             // enough range for vanilla's cave and surface density operations.
                             out.set(index++, (float) ((surface - y) * 0.025));
@@ -83,7 +89,7 @@ public record TectonicTerrainFunction() implements DensityFunction {
         private double surfaceHeight(int x, int z) {
             double continentalness = land.sample(x, z);
             // Keep the continental shelves below sea level and lift coasts gradually.
-            double inland = smoothstep(-0.08, 0.48, continentalness);
+            double inland = smoothstep(-0.24, 0.32, continentalness);
             double oceanNoise = noise(x, z, 24_000.0, 0x6A09E667F3BCC909L);
             double lowlands = 25.0 + oceanNoise * 18.0;
             double plains = 73.0 + inland * (92.0 + noise(x, z, 18_000.0, 0xBB67AE8584CAA73BL) * 34.0);

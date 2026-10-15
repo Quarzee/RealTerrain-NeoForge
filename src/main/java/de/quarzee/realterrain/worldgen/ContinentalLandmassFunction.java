@@ -1,5 +1,7 @@
 package de.quarzee.realterrain.worldgen;
 
+import java.util.Arrays;
+
 import com.mojang.serialization.MapCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Interval;
@@ -10,12 +12,9 @@ import net.minecraft.world.level.levelgen.densityfunction.DensityVolume;
 import net.minecraft.world.level.levelgen.densityfunction.DfRewriteRule;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 
-/** Seeded 2D continentalness field shared by vanilla terrain and spawn selection. */
+/** Seeded land/water coverage field scaled to the selected world footprint. */
 public record ContinentalLandmassFunction() implements DensityFunction {
     public static final MapCodec<ContinentalLandmassFunction> CODEC = MapCodec.unit(new ContinentalLandmassFunction());
-    private static final double CELL_SPACING = 1_350_000.0;
-    private static final double MAX_CENTER_JITTER = 120_000.0;
-    private static final double MIN_RADIUS = 340_000.0;
 
     @Override
     public DensitySampler compileSampler(CompileContext context) {
@@ -30,12 +29,11 @@ public record ContinentalLandmassFunction() implements DensityFunction {
             @Override
             public void sampleVolume(SamplerContext context, DensityBuffer out, DensityVolume volume) {
                 int index = 0;
-                for (int zi = 0; zi < volume.sizeZ(); zi++) {
-                    int z = volume.blockZ(zi);
-                    for (int xi = 0; xi < volume.sizeX(); xi++) {
-                        float value = sampler.sample(volume.blockX(xi), z);
-                        for (int yi = 0; yi < volume.sizeY(); yi++) {
-                            out.set(index++, value);
+                for (int yi = 0; yi < volume.sizeY(); yi++) {
+                    for (int zi = 0; zi < volume.sizeZ(); zi++) {
+                        int z = volume.blockZ(zi);
+                        for (int xi = 0; xi < volume.sizeX(); xi++) {
+                            out.set(index++, sampler.sample(volume.blockX(xi), z));
                         }
                     }
                 }
@@ -49,68 +47,87 @@ public record ContinentalLandmassFunction() implements DensityFunction {
     @Override public MapCodec<ContinentalLandmassFunction> codec() { return CODEC; }
 
     static LandmassSampler createSampler(long seed) {
-        return new LandmassSampler(seed);
+        return new LandmassSampler(seed, WorldSizeSelection.halfWorldSize(),
+                WorldSizeSelection.currentLandCoveragePercent());
     }
 
     static final class LandmassSampler {
-        private final long seed;
+        private static final double REFERENCE_HALF_SIZE = 1_500_000.0;
+        private static final int CALIBRATION_RESOLUTION = 256;
+        private static volatile ThresholdCache cachedThreshold;
 
-        LandmassSampler(long seed) {
+        private final long seed;
+        private final double coordinateScale;
+        private final double threshold;
+
+        LandmassSampler(long seed, double halfWorldSize, int landCoveragePercent) {
             this.seed = seed;
+            this.coordinateScale = REFERENCE_HALF_SIZE / Math.max(50_000.0, halfWorldSize);
+            this.threshold = calibratedThreshold(seed, landCoveragePercent);
         }
 
         float sample(int x, int z) {
-            double warpX = valueNoise(x, z, 520_000.0, 0x13579BDFL) * 48_000.0
-                    + valueNoise(x, z, 210_000.0, 0x2468ACE0L) * 22_000.0
-                    + valueNoise(x, z, 75_000.0, 0xC0AC29B7L) * 8_000.0;
-            double warpZ = valueNoise(x, z, 480_000.0, 0x10293847L) * 42_000.0
-                    + valueNoise(x, z, 195_000.0, 0x56473829L) * 20_000.0
-                    + valueNoise(x, z, 68_000.0, 0x3F84D5B5L) * 7_000.0;
-            int cellX = floor((x + warpX + CELL_SPACING * 0.5) / CELL_SPACING);
-            int cellZ = floor((z + warpZ + CELL_SPACING * 0.5) / CELL_SPACING);
-            double best = -10.0;
-            for (int gz = cellZ - 1; gz <= cellZ + 1; gz++) {
-                for (int gx = cellX - 1; gx <= cellX + 1; gx++) {
-                    double nominalDx = x + warpX - gx * CELL_SPACING;
-                    double nominalDz = z + warpZ - gz * CELL_SPACING;
-                    if (nominalDx * nominalDx + nominalDz * nominalDz > 1_400_000.0 * 1_400_000.0) continue;
-                    best = Math.max(best, continentScore(x + warpX, z + warpZ, gx, gz));
-                }
-            }
-            return (float) clamp(best * 2.4, -1.0, 1.0);
+            double normalizedX = x * coordinateScale;
+            double normalizedZ = z * coordinateScale;
+            double score = landScore(normalizedX, normalizedZ);
+            // Zero is the calibrated coastline. The terrain envelope eases the shore
+            // through sea level while biome climate ranges remain continuous at zero.
+            return (float) clamp((score - threshold) * 5.0, -1.0, 1.0);
         }
 
-        private double continentScore(double x, double z, int cellX, int cellZ) {
-            long cellSeed = mix64(seed ^ (long) cellX * 0x9E3779B97F4A7C15L
-                    ^ (long) cellZ * 0xC2B2AE3D27D4EB4FL);
-            boolean originCell = cellX == 0 && cellZ == 0;
-            double centerX = cellX * CELL_SPACING + (originCell ? 0.0
-                    : (unit(mix64(cellSeed + 0x510E527FADE682D1L)) - 0.5) * 2.0 * MAX_CENTER_JITTER);
-            double centerZ = cellZ * CELL_SPACING + (originCell ? 0.0
-                    : (unit(mix64(cellSeed + 0x9B05688C2B3E6C1FL)) - 0.5) * 2.0 * MAX_CENTER_JITTER);
-            double radius = MIN_RADIUS + unit(mix64(cellSeed + 0x1F83D9ABFB41BD6BL)) * 140_000.0;
-            double aspect = 0.86 + unit(mix64(cellSeed + 0x5BE0CD19137E2179L)) * 0.28;
-            double rotation = unit(mix64(cellSeed + 0xBB67AE8584CAA73BL)) * Math.PI * 2.0;
-            double dx = x - centerX;
-            double dz = z - centerZ;
-            double cos = Math.cos(rotation);
-            double sin = Math.sin(rotation);
-            double u = (dx * cos - dz * sin) / (radius * Math.sqrt(aspect));
-            double v = (dx * sin + dz * cos) / (radius / Math.sqrt(aspect));
-            double angle = Math.atan2(v, u);
-            double radial = Math.sqrt(u * u + v * v);
-            double lobes = 0.0;
-            for (int harmonic = 2; harmonic <= 7; harmonic++) {
-                long h = mix64(cellSeed + harmonic * 0xD6E8FEB86659FD93L);
-                double phase = unit(h) * Math.PI * 2.0;
-                double amplitude = 0.06 + unit(mix64(h)) * 0.08;
-                lobes += Math.sin(harmonic * angle + phase) * amplitude;
+        private double calibratedThreshold(long worldSeed, int coveragePercent) {
+            ThresholdCache cached = cachedThreshold;
+            if (cached != null && cached.seed() == worldSeed && cached.coverage() == coveragePercent) {
+                return cached.threshold();
             }
-            double edge = valueNoise(x, z, 190_000.0, cellSeed) * 0.14
-                    + valueNoise(x, z, 76_000.0, cellSeed ^ 0x6A09E667F3BCC909L) * 0.08
-                    + valueNoise(x, z, 26_000.0, cellSeed ^ 0xBB67AE8584CAA73BL) * 0.04
-                    + valueNoise(x, z, 8_000.0, cellSeed ^ 0x3C6EF372FE94F82BL) * 0.02;
-            return 1.0 - radial / Math.max(0.45, 1.0 + lobes) + edge;
+            synchronized (LandmassSampler.class) {
+                cached = cachedThreshold;
+                if (cached != null && cached.seed() == worldSeed && cached.coverage() == coveragePercent) {
+                    return cached.threshold();
+                }
+                double[] samples = new double[CALIBRATION_RESOLUTION * CALIBRATION_RESOLUTION];
+                int index = 0;
+                double step = (REFERENCE_HALF_SIZE * 2.0) / CALIBRATION_RESOLUTION;
+                for (int gz = 0; gz < CALIBRATION_RESOLUTION; gz++) {
+                    double z = -REFERENCE_HALF_SIZE + (gz + 0.5) * step;
+                    for (int gx = 0; gx < CALIBRATION_RESOLUTION; gx++) {
+                        double x = -REFERENCE_HALF_SIZE + (gx + 0.5) * step;
+                        samples[index++] = landScore(x, z);
+                    }
+                }
+                Arrays.sort(samples);
+                if (coveragePercent == 0) {
+                    double threshold = 1.000001;
+                    cachedThreshold = new ThresholdCache(worldSeed, coveragePercent, threshold);
+                    return threshold;
+                }
+                if (coveragePercent == 100) {
+                    double threshold = -1.000001;
+                    cachedThreshold = new ThresholdCache(worldSeed, coveragePercent, threshold);
+                    return threshold;
+                }
+                int landSamples = (int) Math.round(samples.length * coveragePercent / 100.0);
+                int firstLandIndex = samples.length - landSamples;
+                double threshold = (samples[firstLandIndex - 1] + samples[firstLandIndex]) * 0.5;
+                cachedThreshold = new ThresholdCache(worldSeed, coveragePercent, threshold);
+                return threshold;
+            }
+        }
+
+        private double landScore(double x, double z) {
+            double warpedX = x
+                    + valueNoise(x, z, 620_000.0, 0x13579BDFL) * 155_000.0
+                    + valueNoise(x, z, 235_000.0, 0x2468ACE0L) * 58_000.0
+                    + valueNoise(x, z, 82_000.0, 0xC0AC29B7L) * 18_000.0;
+            double warpedZ = z
+                    + valueNoise(x, z, 590_000.0, 0x10293847L) * 140_000.0
+                    + valueNoise(x, z, 220_000.0, 0x56473829L) * 52_000.0
+                    + valueNoise(x, z, 76_000.0, 0x3F84D5B5L) * 16_000.0;
+
+            return valueNoise(warpedX, warpedZ, 720_000.0, 0x510E527FADE682D1L) * 0.58
+                    + valueNoise(warpedX, warpedZ, 330_000.0, 0x9B05688C2B3E6C1FL) * 0.25
+                    + valueNoise(warpedX, warpedZ, 145_000.0, 0x1F83D9ABFB41BD6BL) * 0.12
+                    + valueNoise(warpedX, warpedZ, 58_000.0, 0x5BE0CD19137E2179L) * 0.05;
         }
 
         private double valueNoise(double x, double z, double scale, long salt) {
@@ -131,15 +148,18 @@ public record ContinentalLandmassFunction() implements DensityFunction {
             long h = mix64(seed ^ salt ^ (long) x * 0x9E3779B97F4A7C15L ^ (long) z * 0xC2B2AE3D27D4EB4FL);
             return ((h >>> 11) * 0x1.0p-52) - 1.0;
         }
-        private static long mix64(long z) {
-            z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
-            z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
-            return z ^ (z >>> 31);
+
+        private static long mix64(long value) {
+            value = (value ^ (value >>> 30)) * 0xBF58476D1CE4E5B9L;
+            value = (value ^ (value >>> 27)) * 0x94D049BB133111EBL;
+            return value ^ (value >>> 31);
         }
-        private static int floor(double value) { int i = (int) value; return value < i ? i - 1 : i; }
+
+        private static int floor(double value) { int integer = (int) value; return value < integer ? integer - 1 : integer; }
         private static double smooth(double t) { return t * t * (3.0 - 2.0 * t); }
         private static double lerp(double a, double b, double t) { return a + (b - a) * t; }
         private static double clamp(double value, double min, double max) { return Math.max(min, Math.min(max, value)); }
-        private static double unit(long value) { return (value >>> 11) * 0x1.0p-53; }
+
+        private record ThresholdCache(long seed, int coverage, double threshold) {}
     }
 }

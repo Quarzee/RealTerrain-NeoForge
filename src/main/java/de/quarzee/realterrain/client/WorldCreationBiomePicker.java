@@ -3,6 +3,7 @@ package de.quarzee.realterrain.client;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.CycleButton;
@@ -20,8 +21,9 @@ import de.quarzee.realterrain.worldgen.WorldSizeSelection;
 @EventBusSubscriber(modid = RealTerrain.MODID, value = Dist.CLIENT)
 public final class WorldCreationBiomePicker {
     private static final Choice DEFAULT = new Choice(null);
-    private static final List<Long> WORLD_SIZES = List.of(100_000L, 250_000L, 500_000L, 1_000_000L,
+    private static final List<Long> WORLD_SIZES = List.of(100_000L, 200_000L, 300_000L, 500_000L, 1_000_000L,
             2_000_000L, 3_000_000L, 5_000_000L, 10_000_000L);
+    private static final List<Integer> LAND_COVERAGE = IntStream.rangeClosed(0, 100).boxed().toList();
     private static final List<Choice> CHOICES = List.of(
             DEFAULT,
             new Choice(StartingBiomeSelection.ClimateType.TROPICAL_RAINFOREST),
@@ -46,12 +48,14 @@ public final class WorldCreationBiomePicker {
 
         StartingBiomeSelection.ClimateType selected = StartingBiomeSelection.currentClimateType();
         Choice initial = CHOICES.stream().filter(choice -> Objects.equals(choice.climateType(), selected)).findFirst().orElse(DEFAULT);
-        WorldSizeSelection.select(WorldSizeSelection.currentSize(), screen.getUiState().getSettings().options().seed());
+        WorldSizeSelection.select(WorldSizeSelection.currentSize(), WorldSizeSelection.currentLandCoveragePercent(),
+                screen.getUiState().getSettings().options().seed());
         if (selected != null) {
             StartingBiomeSelection.select(selected, screen.getUiState().getSettings().options().seed());
         }
         screen.getUiState().addListener(state -> {
-            WorldSizeSelection.select(WorldSizeSelection.currentSize(), state.getSettings().options().seed());
+            WorldSizeSelection.select(WorldSizeSelection.currentSize(), WorldSizeSelection.currentLandCoveragePercent(),
+                    state.getSettings().options().seed());
             StartingBiomeSelection.ClimateType current = StartingBiomeSelection.currentClimateType();
             if (current != null) {
                 StartingBiomeSelection.select(current, state.getSettings().options().seed());
@@ -78,14 +82,28 @@ public final class WorldCreationBiomePicker {
                 .withValues(WORLD_SIZES)
                 .create(allowCommandsButton.getX(), picker.getY() + picker.getHeight() + 8,
                         allowCommandsButton.getWidth(), 20, Component.translatable("gui.realterrain.world_size"),
-                        (button, value) -> WorldSizeSelection.select(value, screen.getUiState().getSettings().options().seed()));
+                        (button, value) -> WorldSizeSelection.select(value, WorldSizeSelection.currentLandCoveragePercent(),
+                                screen.getUiState().getSettings().options().seed()));
         sizePicker.setValue(WorldSizeSelection.currentSize());
         event.addListener(sizePicker);
+
+        CycleButton<Integer> coveragePicker = CycleButton.<Integer>builder(WorldCreationBiomePicker::formatLandCoverage, 29)
+                .withValues(LAND_COVERAGE)
+                .create(allowCommandsButton.getX(), sizePicker.getY() + sizePicker.getHeight() + 8,
+                        allowCommandsButton.getWidth(), 20, Component.translatable("gui.realterrain.land_coverage"),
+                        (button, value) -> WorldSizeSelection.select(WorldSizeSelection.currentSize(), value,
+                                screen.getUiState().getSettings().options().seed()));
+        coveragePicker.setValue(WorldSizeSelection.currentLandCoveragePercent());
+        event.addListener(coveragePicker);
     }
 
     private static Component formatWorldSize(Long size) {
         String formatted = String.format(Locale.ROOT, "%,d × %,d", size, size);
         return Component.literal(formatted);
+    }
+
+    private static Component formatLandCoverage(Integer landPercent) {
+        return Component.literal(landPercent + "% land / " + (100 - landPercent) + "% water");
     }
 
     private record Choice(StartingBiomeSelection.ClimateType climateType) {
